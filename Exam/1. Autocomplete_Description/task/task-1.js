@@ -2,101 +2,81 @@
 
 function solve() {
     return function(selector, initialSuggestions) {
-        var root = document.querySelector(selector),
-            fragment = document.createDocumentFragment(),
-            list = document.querySelector('.suggestions-list'),
-            suggestions = document.getElementsByClassName('suggestion'),
-            input = document.getElementsByClassName('tb-pattern')[0],
-            button = document.getElementsByClassName('btn-add')[0];
- 
-        function checkIfDuplicate(currentSuggestion) {
-                for(var i = 0, len = suggestions.length; i < len; i += 1) {
-                    if(currentSuggestion != undefined) {
-                        if(currentSuggestion.toLowerCase() === suggestions[i].getElementsByTagName('a')[0].innerHTML.toLowerCase()) {
-                            return true;
-                        }
-                    }
-                }
-            }
- 
-            function createLi(suggestion) {
+        var element = selector,
+        fragment,
+        initialSuggestions = initialSuggestions || [];
+        if (typeof element === 'string') {
+            element = document.querySelector(element);
+        }
+        if (!element || !(element instanceof HTMLElement)) {
+            throw new Error('Invalid HTML element!');
+        }
+        fragment = document.createDocumentFragment();
+        var input = document.querySelector('.tb-pattern');
+        var button = document.querySelector('.btn-add');
+        var ul = document.querySelector('.suggestions-list');
+        var suggestion = document.getElementsByClassName('suggestion'); 
+
+           function createLi(suggestion) {
                 var li = document.createElement('li'),
                     a = document.createElement('a');
                 li.className = 'suggestion';
-                li.style.display = 'none';
+                li.style.display = 'none'; //trqbva da sa skriti
                 a.className = 'suggestion-link';
                 a.innerHTML = suggestion;
                 li.appendChild(a);
-                list.appendChild(li);
+                ul.appendChild(li);
             }
- 
- 
-        if(initialSuggestions != undefined) {
-            for (var i = 0, len = initialSuggestions.length; i < len; i += 1) {
+
+            function duplicate(current){
+            for (var i = 0; i < suggestion.length; i+=1) {
+                if(current != undefined){
+                    if (current.toLowerCase() === suggestion[i].getElementsByTagName('a')[0].innerHTML.toLowerCase()) {
+                        return true;
+                    }
+                }              
+            }
+
+            }
+//suzdavame li-ta ot podadeniq ni masiv,kato proverqvame za dublir6ti se ot podadeniq ni masiv
+            for (var i = 0; i < initialSuggestions.length; i+=1) {
                 var currentSuggestion = initialSuggestions[i];
- 
-                if(i === 0) {
-                   createLi(currentSuggestion);
-                }
-                else {
-                    var duplicated = checkIfDuplicate(currentSuggestion);
-                    if(!duplicated) {
-                        createLi(currentSuggestion);
-                    }
+                if(!duplicate(currentSuggestion)){
+                createLi(currentSuggestion);
                 }
             }
+    //add, no samo, ako ne se povtarq
+            button.addEventListener('click', function(ev){
+            if(!duplicate(input.value)){
+            createLi(input.value);
+            }
+            input.value = '';
+            });
+//search, kato ne zabravqme caseSensitive na vuvedenoto i na samiq anchor(ot masiva)
+    input.addEventListener('input', function(){
+    var pattern = input.value.toLowerCase();
+    for (i=0, len = suggestion.length; i < len; i+=1) {
+        var text = suggestion[i].getElementsByTagName('a')[0].innerHTML.toLowerCase();
+        if(pattern.length === 0) {
+                suggestion[i].style.display = 'none'
+            }
+        if (text.indexOf(pattern) < 0) {
+            suggestion[i].style.display = "none";
+        }else{
+            suggestion[i].style.display = "";
         }
- 
-        list.addEventListener('click', function (event) {
-            var target = event.target;
-           
-                if(target.className === 'suggestion-link') {
-                    input.value = target.innerHTML;
-                }
-                if(target.className === 'suggestion') {
-                    input.value = target.firstChild.innerHTML;
-                }
-        });
- 
-        input.addEventListener('input', function () {
-            var searchVal = input.value.toLowerCase();
-           
-            for(var i = 0, len = suggestions.length; i < len; i += 1) {
-                var text = suggestions[i].getElementsByTagName('a')[0].innerHTML.toLowerCase();
-               
-                if(searchVal.length === 0) {
-                    suggestions[i].style.display = 'none'
-                }
-                else {
-                    if (text.indexOf(searchVal) < 0) {
-                        suggestions[i].style.display = 'none';
-                    }
-                    else {
-                        suggestions[i].style.display = '';
-                    }
-                }
-            }
-        });
- 
-        button.addEventListener('click', function (ev) {
-            if(input.value.length > 0) {
-                var duplicated = checkIfDuplicate(input.value);
-               
-                if(!duplicated) {
-                    createLi(input.value);
-                }
- 
-                input.value = '';
-                for(var i = 0, len = suggestions.length; i < len; i += 1) {
-                    suggestions[i].style.display = 'none';
-                }
-            }
-        });
- 
-        fragment.appendChild(list);
-        root.appendChild(fragment);
+    }
+    });
+//sled klikane na li, da se zapulni autocomplete(inputa)
+    ul.addEventListener('click', function(ev){
+        var target = ev.target;
+        if (target.className === 'suggestion-link') {
+            input.value = target.innerHTML;
+        }
+    });
 
-
+        fragment.appendChild(ul);
+        element.appendChild(fragment);
     };
 }
 
